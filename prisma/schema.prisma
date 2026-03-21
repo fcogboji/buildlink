@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  HOMEOWNER
+  BUILDER
+  ADMIN
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  MATCHED
+  IN_PROGRESS
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  PAID
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  ESCROW
+  RELEASED
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id               String           @id @default(cuid())
+  clerkUserId      String           @unique
+  email            String           @unique
+  fullName         String?
+  role             UserRole         @default(HOMEOWNER)
+  suspended          Boolean          @default(false)
+  onboardingCompleted Boolean         @default(false)
+  savedAddresses   Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  homeownerJobs    Job[]            @relation("HomeownerJobs")
+  builderQuotes    Quote[]          @relation("BuilderQuotes")
+  reviewsGiven     Review[]         @relation("ReviewAuthor")
+  reviewsRecvd     Review[]         @relation("ReviewTarget")
+  builderProfile   BuilderProfile?
+  messagesSent     Message[]        @relation("MessageSender")
+  builderProjects  Project[]        @relation("BuilderProjects")
+}
+
+model BuilderProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  companyName         String
+  /// Trades / specialties (e.g. plumbing, electrical)
+  trades              String[]
+  serviceAreas        String[]
+  specialties         String[]
+  yearsExperience     Int?
+  certifications      String[]
+  availability      String?
+  verificationScore   Int      @default(0)
+  verified            Boolean  @default(false)
+  rating              Float    @default(0)
+  bio                 String?
+  portfolioVideoUrl   String?
+  portfolioImageUrls  String[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id               String      @id @default(cuid())
+  homeownerId      String
+  title            String
+  description      String
+  postcode         String
+  propertyType     String?
+  imageUrls        String[]
+  budgetMin        Int
+  budgetMax        Int
+  timelineWeeks    Int?
+  preferredStart   DateTime?
+  status           JobStatus   @default(OPEN)
+  escrowEnabled    Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  homeowner        User        @relation("HomeownerJobs", fields: [homeownerId], references: [id], onDelete: Cascade)
+  quotes           Quote[]
+  milestones       Milestone[]
+  messages         Message[]
+  project          Project?
+  reviews          Review[]
+}
+
+model Quote {
+  id               String      @id @default(cuid())
+  jobId            String
+  builderId        String
+  amount           Int
+  daysToComplete   Int
+  introMessage     String
+  status           QuoteStatus @default(PENDING)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  job              Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  builder          User        @relation("BuilderQuotes", fields: [builderId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, builderId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  jobId       String        @unique
+  builderId   String
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  job         Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  builder     User          @relation("BuilderProjects", fields: [builderId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+}
+
+model Milestone {
+  id               String          @id @default(cuid())
+  jobId            String
+  title            String
+  amount           Int
+  dueDate          DateTime?
+  status           MilestoneStatus @default(PENDING)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  job              Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  payment          Payment?
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  milestoneId           String?       @unique
+  projectId             String?
+  amount                Int
+  currency              String        @default("gbp")
+  status                PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  milestone             Milestone?    @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  project               Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  jobId     String
+  senderId  String
+  body      String
+  createdAt DateTime @default(now())
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  authorId    String
+  targetId    String
+  jobId       String?
+  rating      Int
+  text        String
+  verified    Boolean  @default(false)
+  moderated   Boolean  @default(false)
+  hidden      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  target      User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+}
