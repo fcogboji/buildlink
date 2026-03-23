@@ -162,9 +162,22 @@ npm run dev
 
 ## Vercel
 
-- Set env vars (Clerk, `DATABASE_URL`, Stripe, `ADMIN_EMAILS`, `NEXT_PUBLIC_APP_URL`).  
+- Set env vars (Clerk, `DATABASE_URL`, Stripe, `ADMIN_EMAILS`, `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY` / `EMAIL_FROM` if you use email).  
 - Clerk callback URLs for your domain.  
 - Stripe webhook: `https://your-domain.com/api/stripe/webhook`.  
+- **`npm run build` runs `prisma generate && next build`** so TypeScript always sees the latest Prisma models (fixes stale `PrismaClient` types on CI). `postinstall` also runs `prisma generate` after `npm install`.  
+- After schema changes, run **`prisma db push`** (or migrate) against your **production** database, then redeploy.
+
+### Build failed on Vercel but works locally?
+
+The log line **“✓ Compiled successfully”** is only the first phase. Scroll the build log for the **first error after that** (often **TypeScript**, **Collecting page data**, or **Generating static pages**).
+
+Common fixes:
+
+1. **Paste the full error** (the block after “Compiled successfully”) — that pinpoints the fix.  
+2. **Redeploy → … → Redeploy without build cache** — stale cache can break after dependency or Prisma changes.  
+3. **Confirm production env vars** in Vercel → Project → Settings → Environment Variables (especially `DATABASE_URL`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).  
+4. **Production DB schema** — if deploy/runtime errors mention missing tables/columns, run `prisma db push` against the Neon URL used in Vercel.  
 
 ## Phase 2+ (not fully wired)
 
@@ -173,4 +186,3 @@ npm run dev
 - **Push notifications**  
 - **Search & filters** on job feed  
 - **AI matching** on top of rule-based score  
-# buildlink
