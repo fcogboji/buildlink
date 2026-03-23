@@ -1,8 +1,10 @@
 "use server";
 
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { notifyUser, notifyUsers } from "@/lib/notifications";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { ensureUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
@@ -18,6 +20,26 @@ function parseList(value: FormDataEntryValue | null): string[] {
     .split(/[,\n]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+async function logAdminAction(input: {
+  adminUserId: string;
+  action: "USER_SUSPENDED" | "USER_UNSUSPENDED" | "BUILDER_VERIFIED" | "REVIEW_HIDDEN" | "DISPUTE_RESOLVED";
+  targetType: string;
+  targetId: string;
+  reasonCode?: string | null;
+  metadata?: Prisma.InputJsonValue;
+}) {
+  await prisma.adminAuditLog.create({
+    data: {
+      adminUserId: input.adminUserId,
+      action: input.action,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      reasonCode: input.reasonCode || null,
+      metadata: input.metadata,
+    },
+  });
 }
 
 export async function updateMyRole(formData: FormData) {
@@ -156,6 +178,13 @@ export async function createJob(formData: FormData) {
   if (!user) {
     redirect("/sign-in");
   }
+  const allowed = await consumeRateLimit({
+    scopeKey: `user:${user.id}`,
+    action: "create_job",
+    limit: 8,
+    windowSeconds: 60 * 60,
+  });
+  if (!allowed) redirect("/dashboard/homeowner/jobs/new?error=rate_limit_create_job");
 
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
@@ -195,6 +224,13 @@ export async function createQuote(formData: FormData) {
   if (!user) {
     redirect("/sign-in");
   }
+  const allowed = await consumeRateLimit({
+    scopeKey: `user:${user.id}`,
+    action: "create_quote",
+    limit: 30,
+    windowSeconds: 60 * 60,
+  });
+  if (!allowed) redirect("/dashboard/builder/jobs/feed?error=rate_limit_create_quote");
 
   const jobId = String(formData.get("jobId") || "");
   const amount = toInt(formData.get("amount"));
@@ -204,6 +240,12 @@ export async function createQuote(formData: FormData) {
   if (!jobId || amount <= 0 || daysToComplete <= 0 || !introMessage) {
     return;
   }
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: { id: true, homeownerId: true, title: true },
+  });
+  if (!job) return;
 
   await prisma.quote.upsert({
     where: { jobId_builderId: { jobId, builderId: user.id } },
@@ -220,6 +262,14 @@ export async function createQuote(formData: FormData) {
   await prisma.job.update({
     where: { id: jobId },
     data: { status: "MATCHED" },
+  });
+
+  await notifyUser({
+    userId: job.homeownerId,
+    type: "QUOTE_SUBMITTED",
+    title: "New quote received",
+    body: `${user.fullName || "A builder"} sent a quote for "${job.title}".`,
+    jobId: job.id,
   });
 
   revalidatePath("/builder/leads");
@@ -257,6 +307,16 @@ export async function acceptQuote(formData: FormData) {
     }),
   ]);
 
+  await notifyUsers([
+    {
+      userId: quote.builderId,
+      type: "QUOTE_ACCEPTED",
+      title: "Quote accepted",
+      body: `Your quote for "${quote.job.title}" has been accepted.`,
+      jobId: quote.jobId,
+    },
+  ]);
+
   revalidatePath(`/dashboard/homeowner/jobs/${quote.jobId}`);
   revalidatePath(`/dashboard/builder/projects`);
 }
@@ -265,6 +325,21 @@ export async function sendJobMessage(formData: FormData) {
   const user = await ensureUser();
   if (!user) redirect("/sign-in");
   const jobId = String(formData.get("jobId") || "");
+  const allowed = await consumeRateLimit({
+    scopeKey: `user:${user.id}`,
+    action: "send_message",
+    limit: 40,
+    windowSeconds: 60,
+  });
+  if (!allowed) {
+    if (jobId) {
+      if (user.role === "BUILDER") {
+        redirect(`/dashboard/builder/jobs/${jobId}?error=rate_limit_message`);
+      }
+      redirect(`/dashboard/homeowner/jobs/${jobId}?error=rate_limit_message`);
+    }
+    return;
+  }
   const body = String(formData.get("body") || "").trim();
   if (!jobId || !body) return;
 
@@ -283,6 +358,25 @@ export async function sendJobMessage(formData: FormData) {
     data: { jobId, senderId: user.id, body },
   });
 
+  const recipientIds = new Set<string>();
+  if (job.homeownerId !== user.id) {
+    recipientIds.add(job.homeownerId);
+  }
+  if (job.project?.builderId && job.project.builderId !== user.id) {
+    recipientIds.add(job.project.builderId);
+  }
+  if (recipientIds.size > 0) {
+    await notifyUsers(
+      [...recipientIds].map((recipientId) => ({
+        userId: recipientId,
+        type: "NEW_MESSAGE" as const,
+        title: "New message",
+        body: `${user.fullName || "A user"} sent a new message on job "${job.title}".`,
+        jobId,
+      })),
+    );
+  }
+
   revalidatePath(`/dashboard/homeowner/messages`);
   revalidatePath(`/dashboard/builder/messages`);
   revalidatePath(`/dashboard/homeowner/jobs/${jobId}`);
@@ -294,8 +388,18 @@ export async function addMilestone(formData: FormData) {
   if (!user) {
     redirect("/sign-in");
   }
-
   const jobId = String(formData.get("jobId") || "");
+  const allowed = await consumeRateLimit({
+    scopeKey: `user:${user.id}`,
+    action: "add_milestone",
+    limit: 20,
+    windowSeconds: 60 * 60,
+  });
+  if (!allowed) {
+    if (jobId) redirect(`/dashboard/homeowner/jobs/${jobId}?error=rate_limit_add_milestone`);
+    return;
+  }
+
   const title = String(formData.get("title") || "").trim();
   const amount = toInt(formData.get("amount"));
 
@@ -316,6 +420,20 @@ export async function addMilestone(formData: FormData) {
       status: "PENDING",
     },
   });
+
+  const project = await prisma.project.findUnique({
+    where: { jobId },
+    select: { builderId: true },
+  });
+  if (project?.builderId && project.builderId !== user.id) {
+    await notifyUser({
+      userId: project.builderId,
+      type: "MILESTONE_CREATED",
+      title: "New milestone added",
+      body: `A new milestone "${title}" was added to your project.`,
+      jobId,
+    });
+  }
 
   revalidatePath(`/homeowner/jobs/${jobId}`);
   revalidatePath(`/dashboard/homeowner/jobs/${jobId}`);
@@ -354,6 +472,7 @@ export async function resolveDispute(formData: FormData) {
   }
 
   const jobId = String(formData.get("jobId") || "");
+  const reasonCode = String(formData.get("reasonCode") || "").trim();
   if (!jobId) return;
 
   await prisma.job.update({
@@ -361,7 +480,16 @@ export async function resolveDispute(formData: FormData) {
     data: { status: "IN_PROGRESS" },
   });
 
+  await logAdminAction({
+    adminUserId: user.id,
+    action: "DISPUTE_RESOLVED",
+    targetType: "JOB",
+    targetId: jobId,
+    reasonCode: reasonCode || "manual_review_complete",
+  });
+
   revalidatePath("/admin/disputes");
+  revalidatePath("/admin/moderation");
 }
 
 export async function verifyBuilder(formData: FormData) {
@@ -371,14 +499,26 @@ export async function verifyBuilder(formData: FormData) {
   }
 
   const profileId = String(formData.get("profileId") || "");
+  const reasonCode = String(formData.get("reasonCode") || "").trim();
   if (!profileId) return;
 
-  await prisma.builderProfile.update({
+  const updatedProfile = await prisma.builderProfile.update({
     where: { id: profileId },
     data: { verified: true, verificationScore: 90 },
+    select: { id: true, userId: true },
+  });
+
+  await logAdminAction({
+    adminUserId: user.id,
+    action: "BUILDER_VERIFIED",
+    targetType: "BUILDER_PROFILE",
+    targetId: updatedProfile.id,
+    reasonCode: reasonCode || "verification_passed",
+    metadata: { builderUserId: updatedProfile.userId },
   });
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin/moderation");
 }
 
 export async function suspendUser(formData: FormData) {
@@ -386,19 +526,77 @@ export async function suspendUser(formData: FormData) {
   if (!admin || admin.role !== "ADMIN") return;
   const userId = String(formData.get("userId") || "");
   const suspend = String(formData.get("suspend") || "1") === "1";
+  const reasonCode = String(formData.get("reasonCode") || "").trim();
   if (!userId) return;
   await prisma.user.update({ where: { id: userId }, data: { suspended: suspend } });
+  await logAdminAction({
+    adminUserId: admin.id,
+    action: suspend ? "USER_SUSPENDED" : "USER_UNSUSPENDED",
+    targetType: "USER",
+    targetId: userId,
+    reasonCode: reasonCode || (suspend ? "policy_violation" : "manual_restore"),
+  });
   revalidatePath("/admin/users");
+  revalidatePath("/admin/moderation");
 }
 
 export async function hideReview(formData: FormData) {
   const admin = await ensureUser();
   if (!admin || admin.role !== "ADMIN") return;
   const reviewId = String(formData.get("reviewId") || "");
+  const reasonCode = String(formData.get("reasonCode") || "").trim();
   if (!reviewId) return;
   await prisma.review.update({
     where: { id: reviewId },
     data: { hidden: true, moderated: true },
   });
+  await logAdminAction({
+    adminUserId: admin.id,
+    action: "REVIEW_HIDDEN",
+    targetType: "REVIEW",
+    targetId: reviewId,
+    reasonCode: reasonCode || "content_policy_violation",
+  });
   revalidatePath("/admin/reviews");
+  revalidatePath("/admin/moderation");
+}
+
+export async function markNotificationRead(formData: FormData) {
+  const user = await ensureUser();
+  if (!user) redirect("/sign-in");
+  const notificationId = String(formData.get("notificationId") || "");
+  if (!notificationId) return;
+
+  await prisma.notification.updateMany({
+    where: { id: notificationId, userId: user.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  revalidatePath("/dashboard/notifications");
+}
+
+export async function markAllNotificationsRead() {
+  const user = await ensureUser();
+  if (!user) redirect("/sign-in");
+
+  await prisma.notification.updateMany({
+    where: { userId: user.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  revalidatePath("/dashboard/notifications");
+}
+
+export async function updateEmailNotificationPreference(formData: FormData) {
+  const user = await ensureUser();
+  if (!user) redirect("/sign-in");
+
+  const enabled = String(formData.get("emailNotificationsEnabled") || "0") === "1";
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { emailNotificationsEnabled: enabled },
+  });
+
+  revalidatePath("/dashboard/homeowner/profile");
+  revalidatePath("/dashboard/builder/profile");
 }

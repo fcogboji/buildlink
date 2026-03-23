@@ -90,7 +90,9 @@ Legacy **`/builder/leads`** → **`/dashboard/builder/jobs/feed`**, **`/builder/
 | `/admin/reviews` | Hide moderated reviews |
 | `/admin/payments` | Payment / refund tracking |
 | `/admin/disputes` | Dispute queue |
+| `/admin/moderation` | Unified moderation queue + admin audit log |
 | `/admin/analytics` | KPI counts |
+| `/admin/diagnostics` | Operational diagnostics (rate-limit activity) |
 
 ## API
 
@@ -129,6 +131,7 @@ cp .env.example .env.local   # if you don’t already have .env.local
 | `DATABASE_URL` | Neon Postgres |
 | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | Server-side Stripe |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Publishable key (browser-safe; use when you add Stripe.js / Elements) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Transactional notification emails |
 
 ### Admin role in Clerk (recommended)
 
@@ -167,7 +170,7 @@ npm run dev
 
 - **Stripe Connect** + true escrow per milestone  
 - **Real-time messaging** (Pusher/Ably/parties)  
-- **Email / push notifications**  
+- **Push notifications**  
 - **Search & filters** on job feed  
 - **AI matching** on top of rule-based score  
 # buildlink

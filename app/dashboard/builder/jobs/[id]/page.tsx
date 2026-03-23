@@ -1,13 +1,18 @@
 import { notFound, redirect } from "next/navigation";
 import { sendJobMessage } from "@/app/actions";
+import { markThreadRead } from "@/lib/messages";
 import { ensureUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ error?: string }>;
+};
 
-export default async function BuilderJobWorkspacePage({ params }: Props) {
+export default async function BuilderJobWorkspacePage({ params, searchParams }: Props) {
   const user = await ensureUser();
   if (!user) redirect("/sign-in");
+  const error = ((await searchParams) ?? {}).error || "";
 
   const { id } = await params;
   const job = await prisma.job.findUnique({
@@ -24,12 +29,19 @@ export default async function BuilderJobWorkspacePage({ params }: Props) {
     notFound();
   }
 
+  await markThreadRead(user.id, job.id);
+
   return (
     <div>
       <h1 className="text-3xl font-semibold">{job.title}</h1>
       <p className="mt-2 text-stone-600">
         {job.postcode} · Homeowner: {job.homeowner.fullName || job.homeowner.email} · {job.status}
       </p>
+      {error === "rate_limit_message" ? (
+        <article className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          You are sending messages too quickly. Please wait a minute and try again.
+        </article>
+      ) : null}
 
       <section className="mt-6 rounded-xl border border-stone-200 bg-white p-4">
         <h2 className="text-lg font-semibold">Milestones</h2>

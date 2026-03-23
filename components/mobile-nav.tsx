@@ -45,7 +45,7 @@ export function MobileNav({ links, className = "", menuLabel = "Open menu" }: Mo
     <div className={`md:hidden ${className}`}>
       <button
         type="button"
-        className="touch-manipulation inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-900 shadow-sm active:bg-stone-100"
+        className="touch-manipulation inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-stone-300/90 bg-white/90 text-stone-900 shadow-sm transition hover:bg-white active:bg-stone-100"
         aria-expanded={open}
         aria-controls="mobile-nav-panel"
         aria-label={open ? "Close menu" : menuLabel}
@@ -64,7 +64,7 @@ export function MobileNav({ links, className = "", menuLabel = "Open menu" }: Mo
           />
           <div
             id="mobile-nav-panel"
-            className="fixed inset-x-0 top-0 z-[70] max-h-[90dvh] overflow-y-auto rounded-b-2xl border-b border-stone-200 bg-[#faf9f7] px-4 pb-safe shadow-xl"
+            className="fixed inset-x-0 top-0 z-[70] max-h-[90dvh] overflow-y-auto rounded-b-2xl border-b border-stone-200 bg-[#faf9f7] px-4 pb-safe shadow-2xl"
             role="dialog"
             aria-modal="true"
             style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}

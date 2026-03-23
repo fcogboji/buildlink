@@ -4,6 +4,7 @@ import { MobileNav, type MobileNavLink } from "@/components/mobile-nav";
 
 const nav: MobileNavLink[] = [
   { href: "/dashboard", label: "Hub" },
+  { href: "/dashboard/notifications", label: "Notifications" },
   { href: "/dashboard/homeowner", label: "Homeowner" },
   { href: "/dashboard/builder", label: "Builder" },
   { href: "/onboarding", label: "Onboarding" },
@@ -19,7 +20,7 @@ const mobileNav: MobileNavLink[] = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+    <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
       <div className="container-app flex items-center justify-between gap-3 py-3 sm:py-4">
         <Link href="/" className="min-h-11 shrink-0 touch-manipulation text-lg font-semibold sm:text-xl">
           Build<span className="text-amber-700">Link</span>
@@ -27,7 +28,7 @@ export function SiteHeader() {
 
         <nav className="hidden flex-wrap items-center justify-center gap-4 text-sm text-stone-600 lg:flex" aria-label="App">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="touch-manipulation hover:text-stone-900">
+            <Link key={item.href} href={item.href} className="touch-manipulation transition-colors hover:text-stone-900">
               {item.label}
             </Link>
           ))}

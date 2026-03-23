@@ -1,11 +1,24 @@
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingHeader } from "@/components/marketing-header";
+import { getSubscriptionStatusCopy } from "@/lib/billing";
+import { ensureUser } from "@/lib/user-sync";
 
 export const metadata = {
   title: "Pricing | BuildLink",
 };
 
-export default function PricingPage() {
+type PricingPageProps = {
+  searchParams?: Promise<{ upgrade?: string; status?: string; error?: string }>;
+};
+
+export default async function PricingPage({ searchParams }: PricingPageProps) {
+  const user = await ensureUser();
+  const params = (await searchParams) ?? {};
+  const showUpgradeNotice = params.upgrade === "builder";
+  const showCheckoutRateLimit = params.error === "rate_limit_checkout";
+  const status = user?.stripeSubscriptionStatus ?? "NONE";
+  const statusText = getSubscriptionStatusCopy(status);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
       <MarketingHeader />
@@ -14,6 +27,21 @@ export default function PricingPage() {
         <p className="mt-2 max-w-2xl text-stone-600">
           A fair subscription with milestone-based confidence. Builders avoid random lead fees and get access to better matched jobs.
         </p>
+
+        {showUpgradeNotice ? (
+          <section className="mt-6 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-wide">Builder access required</p>
+            <p className="mt-1 text-sm">
+              {statusText}
+            </p>
+          </section>
+        ) : null}
+        {showCheckoutRateLimit ? (
+          <section className="mt-4 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-wide">Please wait before retrying checkout</p>
+            <p className="mt-1 text-sm">Too many checkout attempts were made recently. Try again in a few minutes.</p>
+          </section>
+        ) : null}
 
         <section className="mt-8 max-w-xl rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
           <p className="text-sm text-stone-500">BuildLink Pro Builder</p>

@@ -51,14 +51,48 @@ enum PaymentStatus {
   FAILED
 }
 
+enum SubscriptionStatus {
+  NONE
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+enum NotificationType {
+  QUOTE_SUBMITTED
+  QUOTE_ACCEPTED
+  NEW_MESSAGE
+  MILESTONE_CREATED
+}
+
+enum AdminActionType {
+  USER_SUSPENDED
+  USER_UNSUSPENDED
+  BUILDER_VERIFIED
+  REVIEW_HIDDEN
+  DISPUTE_RESOLVED
+}
+
 model User {
   id               String           @id @default(cuid())
   clerkUserId      String           @unique
   email            String           @unique
   fullName         String?
   role             UserRole         @default(HOMEOWNER)
-  suspended          Boolean          @default(false)
-  onboardingCompleted Boolean         @default(false)
+  suspended        Boolean          @default(false)
+  onboardingCompleted Boolean       @default(false)
+  stripeCustomerId String?          @unique
+  stripeSubscriptionId String?      @unique
+  stripeSubscriptionStatus SubscriptionStatus @default(NONE)
+  stripePriceId    String?
+  stripeCurrentPeriodEnd DateTime?
+  stripeSubscriptionUpdatedAt DateTime?
+  emailNotificationsEnabled Boolean @default(true)
   savedAddresses   Json?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -68,7 +102,10 @@ model User {
   reviewsRecvd     Review[]         @relation("ReviewTarget")
   builderProfile   BuilderProfile?
   messagesSent     Message[]        @relation("MessageSender")
+  messageThreads   MessageThreadState[]
   builderProjects  Project[]        @relation("BuilderProjects")
+  notifications    Notification[]
+  adminActions     AdminAuditLog[]  @relation("AdminActor")
 }
 
 model BuilderProfile {
@@ -113,8 +150,10 @@ model Job {
   quotes           Quote[]
   milestones       Milestone[]
   messages         Message[]
+  messageThreads   MessageThreadState[]
   project          Project?
   reviews          Review[]
+  notifications    Notification[]
 }
 
 model Quote {
@@ -184,6 +223,20 @@ model Message {
   @@index([jobId, createdAt])
 }
 
+model MessageThreadState {
+  id         String   @id @default(cuid())
+  userId     String
+  jobId      String
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, updatedAt])
+}
+
 model Review {
   id          String   @id @default(cuid())
   authorId    String
@@ -198,4 +251,50 @@ model Review {
   author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   target      User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
   job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+}
+
+model StripeWebhookEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  type          String
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  jobId     String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job?             @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model AdminAuditLog {
+  id          String          @id @default(cuid())
+  adminUserId String
+  action      AdminActionType
+  targetType  String
+  targetId    String
+  reasonCode  String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  admin       User            @relation("AdminActor", fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt, action])
+  @@index([targetType, targetId])
+}
+
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  scopeKey  String
+  action    String
+  createdAt DateTime @default(now())
+
+  @@index([scopeKey, action, createdAt])
 }

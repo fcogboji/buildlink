@@ -1,13 +1,18 @@
 import { notFound, redirect } from "next/navigation";
 import { acceptQuote, addMilestone, markJobDisputed, sendJobMessage } from "@/app/actions";
+import { markThreadRead } from "@/lib/messages";
 import { ensureUser } from "@/lib/user-sync";
 import { prisma } from "@/lib/prisma";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ error?: string }>;
+};
 
-export default async function HomeownerJobDetailPage({ params }: Props) {
+export default async function HomeownerJobDetailPage({ params, searchParams }: Props) {
   const user = await ensureUser();
   if (!user) redirect("/sign-in");
+  const error = ((await searchParams) ?? {}).error || "";
 
   const { id } = await params;
   const job = await prisma.job.findUnique({
@@ -24,6 +29,8 @@ export default async function HomeownerJobDetailPage({ params }: Props) {
     notFound();
   }
 
+  await markThreadRead(user.id, job.id);
+
   const totalEscrow = job.milestones.reduce((sum, m) => sum + m.amount, 0);
 
   return (
@@ -33,6 +40,16 @@ export default async function HomeownerJobDetailPage({ params }: Props) {
         {job.postcode}
         {job.propertyType ? ` · ${job.propertyType}` : ""} · {job.status}
       </p>
+      {error === "rate_limit_message" ? (
+        <article className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          You are sending messages too quickly. Please wait a minute and try again.
+        </article>
+      ) : null}
+      {error === "rate_limit_add_milestone" ? (
+        <article className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Too many milestone updates in a short period. Please try again later.
+        </article>
+      ) : null}
 
       <section className="mt-6 grid gap-3 md:grid-cols-3">
         <article className="rounded-xl border border-stone-200 bg-white p-4">

@@ -29,6 +29,7 @@ body {
   color: var(--foreground);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 .container-app {

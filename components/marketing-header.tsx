@@ -19,7 +19,7 @@ const mobileLinks: MobileNavLink[] = [
 
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-200 bg-[#faf9f7]/95 backdrop-blur supports-[backdrop-filter]:bg-[#faf9f7]/90">
+    <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-[#faf9f7]/90 backdrop-blur-md supports-[backdrop-filter]:bg-[#faf9f7]/80">
       <div className="container-app flex items-center justify-between gap-3 py-3 sm:py-4">
         <Link
           href="/"
@@ -30,7 +30,7 @@ export function MarketingHeader() {
 
         <nav className="hidden flex-wrap items-center justify-center gap-5 text-sm text-stone-600 md:flex lg:gap-6" aria-label="Primary">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="touch-manipulation hover:text-stone-900">
+            <Link key={l.href} href={l.href} className="touch-manipulation transition-colors hover:text-stone-900">
               {l.label}
             </Link>
           ))}

@@ -6,12 +6,12 @@ import { HeaderAuthControls } from "@/components/auth-header-buttons";
 import { MobileNav, type MobileNavLink } from "@/components/mobile-nav";
 
 const features = [
-  { icon: "✦", title: "Verified Builders", desc: "Identity checks, verified invoices, and moderated reviews." },
-  { icon: "⟡", title: "Smart Matching", desc: "Better-fit leads using scope, budget, timeline, and location." },
-  { icon: "⬡", title: "Escrow Milestones", desc: "Funds are released per approved milestone to reduce payment risk." },
-  { icon: "◈", title: "Project Workflow", desc: "Quotes, milestones, files, and chat in one timeline." },
-  { icon: "◎", title: "No Junk Leads", desc: "Builders only pay for value, not random lead gambling." },
-  { icon: "⊕", title: "Dispute Support", desc: "Structured issue handling with evidence and admin mediation." },
+  { icon: "01", title: "Verified Builders", desc: "Identity checks, verified invoices, and moderated reviews." },
+  { icon: "02", title: "Smart Matching", desc: "Better-fit leads using scope, budget, timeline, and location." },
+  { icon: "03", title: "Escrow Milestones", desc: "Funds are released per approved milestone to reduce payment risk." },
+  { icon: "04", title: "Project Workflow", desc: "Quotes, milestones, files, and chat in one timeline." },
+  { icon: "05", title: "No Junk Leads", desc: "Builders only pay for value, not random lead gambling." },
+  { icon: "06", title: "Dispute Support", desc: "Structured issue handling with evidence and admin mediation." },
 ];
 
 const faqs = [
@@ -42,10 +42,10 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-[#faf9f7] font-sans text-[#1c1a18]">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-[#fcfbf9] via-[#faf9f7] to-[#f4f1ec] font-sans text-[#1c1a18]">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');`}</style>
       <header
-        className={`sticky top-0 z-30 border-b border-[#ece7e1] bg-[#faf9f7]/95 backdrop-blur supports-[backdrop-filter]:bg-[#faf9f7]/90 ${scrolled ? "shadow-sm" : ""}`}
+        className={`sticky top-0 z-30 border-b border-[#ece7e1]/90 bg-[#faf9f7]/90 backdrop-blur-md supports-[backdrop-filter]:bg-[#faf9f7]/80 ${scrolled ? "shadow-sm" : ""}`}
         style={{ fontFamily: "'DM Sans', sans-serif" }}
       >
         <div className="container-app flex flex-wrap items-center justify-between gap-3 py-3 sm:py-4">
@@ -78,13 +78,13 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="container-app grid grid-cols-1 gap-8 py-10 sm:py-14 lg:grid-cols-[1.2fr_1fr] lg:gap-10 lg:py-20">
+      <section className="container-app grid grid-cols-1 gap-8 py-12 sm:py-16 lg:grid-cols-[1.2fr_1fr] lg:gap-12 lg:py-24">
         <div className="min-w-0">
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-[#b45309] sm:mb-3">UK trusted builder workflow</p>
           <h1 className="font-['Playfair_Display',serif] text-[clamp(2rem,8vw,3.75rem)] font-bold leading-[1.08] tracking-tight text-[#1c1a18]">
             Find the right builder and finish projects without chaos
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-[#6b6560] sm:text-lg">
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#6b6560] sm:text-lg">
             BuildLink is designed to beat saturated directories by fixing trust, match quality, and payment risk. Homeowners get confidence.
             Builders get qualified work.
           </p>
@@ -109,9 +109,9 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-        <div className="min-w-0 rounded-2xl bg-[#1c1a18] p-5 text-white sm:p-6 lg:p-8">
-          <p className="text-xs font-medium uppercase tracking-wide text-[#d1a57e]">Differentiation strategy</p>
-          <ul className="mt-4 grid gap-3 text-sm leading-relaxed text-[#e9ddd1] sm:text-[15px]">
+        <div className="min-w-0 rounded-3xl border border-stone-800/80 bg-[#1c1a18] p-6 text-white shadow-[0_18px_45px_rgba(28,26,24,0.25)] sm:p-7 lg:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#d1a57e]">Differentiation strategy</p>
+          <ul className="mt-5 grid gap-3 text-sm leading-relaxed text-[#e9ddd1] sm:text-[15px]">
             <li>Trust proof via invoice-backed history and moderated reviews.</li>
             <li>Matching engine prioritizes fit, not lead volume.</li>
             <li>End-to-end project flow after hire, not directory drop-off.</li>
@@ -126,11 +126,10 @@ export default function LandingPage() {
         </h2>
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           {features.map((f) => (
-            <article
-              key={f.title}
-              className="rounded-[18px] border border-[#e8e4df] bg-white p-5 shadow-sm sm:p-6"
-            >
-              <div className="mb-2 text-2xl text-[#b45309]">{f.icon}</div>
+            <article key={f.title} className="rounded-[20px] border border-[#e8e4df] bg-white/95 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-6">
+              <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e5dacd] bg-[#f8f1e8] text-xs font-semibold text-[#9a5d22]">
+                {f.icon}
+              </div>
               <h3 className="font-['Playfair_Display',serif] text-lg font-semibold text-[#1c1a18]">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-[#6b6560] sm:text-[15px]">{f.desc}</p>
             </article>
@@ -144,7 +143,7 @@ export default function LandingPage() {
         </h2>
         <div className="mt-6 space-y-2 sm:mt-8">
           {faqs.map((item, index) => (
-            <div key={item.q} className="overflow-hidden rounded-[14px] border border-[#e8e4df] bg-white">
+            <div key={item.q} className="overflow-hidden rounded-[16px] border border-[#e8e4df] bg-white/95 shadow-sm">
               <button
                 type="button"
                 className="flex min-h-14 w-full touch-manipulation items-center justify-between gap-4 px-4 py-4 text-left text-sm font-medium text-[#1c1a18] sm:px-5 sm:text-base"
@@ -164,7 +163,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-[#1c1a18] py-10 pb-safe text-center text-[#ded6ce]">
+      <footer className="border-t border-stone-800/80 bg-[#1c1a18] py-12 pb-safe text-center text-[#ded6ce]">
         <div className="container-app flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">
           <Link href="/about" className="touch-manipulation min-h-11 inline-flex items-center text-[#ded6ce]">
             About
@@ -179,7 +178,7 @@ export default function LandingPage() {
             Terms
           </Link>
         </div>
-        <p className="container-app mt-6 text-xs leading-relaxed text-[#a8a29e] sm:text-sm">
+        <p className="container-app mt-8 border-t border-stone-800 pt-5 text-xs leading-relaxed text-[#a8a29e] sm:text-sm">
           © 2026 BuildLink. Acquisition · marketplace · projects · payments & trust.
         </p>
       </footer>

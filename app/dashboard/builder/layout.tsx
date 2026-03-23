@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { isBuilderSubscriptionActive } from "@/lib/billing";
 import { ensureUser } from "@/lib/user-sync";
 
 const nav = [
@@ -19,6 +20,9 @@ export default async function BuilderDashboardLayout({ children }: { children: R
   if (!user) redirect("/sign-in");
   if (user.role !== "BUILDER" && user.role !== "ADMIN") {
     redirect("/dashboard/homeowner");
+  }
+  if (user.role === "BUILDER" && !isBuilderSubscriptionActive(user.stripeSubscriptionStatus)) {
+    redirect(`/pricing?upgrade=builder&status=${user.stripeSubscriptionStatus.toLowerCase()}`);
   }
 
   return (

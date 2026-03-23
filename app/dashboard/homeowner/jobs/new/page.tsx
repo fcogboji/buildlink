@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { createJob } from "@/app/actions";
 
-export default function HomeownerNewJobPage() {
+type HomeownerNewJobPageProps = {
+  searchParams?: Promise<{ error?: string }>;
+};
+
+export default async function HomeownerNewJobPage({ searchParams }: HomeownerNewJobPageProps) {
+  const error = ((await searchParams) ?? {}).error || "";
   return (
     <div>
       <h1 className="text-3xl font-semibold">Post a job</h1>
       <p className="mt-2 text-stone-600">Clear briefs get better matches and fewer time-wasters.</p>
+      {error === "rate_limit_create_job" ? (
+        <article className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          You have reached the hourly job-post limit. Please try again later.
+        </article>
+      ) : null}
 
       <form action={createJob} className="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6">
         <div>

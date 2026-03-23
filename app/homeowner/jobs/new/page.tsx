@@ -1,13 +1,23 @@
 import { SiteHeader } from "@/components/site-header";
 import { createJob } from "@/app/actions";
 
-export default function NewJobPage() {
+type NewJobPageProps = {
+  searchParams?: Promise<{ error?: string }>;
+};
+
+export default async function NewJobPage({ searchParams }: NewJobPageProps) {
+  const error = ((await searchParams) ?? {}).error || "";
   return (
     <div>
       <SiteHeader />
       <main className="container-app max-w-3xl py-6 sm:py-8 pb-safe">
         <h1 className="text-3xl font-semibold">Post a job</h1>
         <p className="mt-2 text-stone-600">Smart matching works best when your brief is specific and realistic.</p>
+        {error === "rate_limit_create_job" ? (
+          <article className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            You have reached the hourly job-post limit. Please try again later.
+          </article>
+        ) : null}
 
         <form action={createJob} className="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6">
           <div>

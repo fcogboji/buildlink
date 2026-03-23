@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { ensureUser } from "@/lib/user-sync";
 import { getStripeClient, PRO_BUILDER_PRICE_ID } from "@/lib/stripe";
 
@@ -33,6 +34,15 @@ export async function POST() {
   if (!dbUser) {
     return NextResponse.json({ error: "Unable to resolve authenticated user." }, { status: 401 });
   }
+  const allowed = await consumeRateLimit({
+    scopeKey: `user:${dbUser.id}`,
+    action: "stripe_checkout_session_create",
+    limit: 8,
+    windowSeconds: 60 * 10,
+  });
+  if (!allowed) {
+    return NextResponse.redirect(new URL("/pricing?error=rate_limit_checkout", appUrl()));
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -40,7 +50,7 @@ export async function POST() {
     success_url: `${appUrl()}/dashboard/builder/jobs/feed?subscribed=1`,
     cancel_url: `${appUrl()}/pricing?cancelled=1`,
     client_reference_id: dbUser.id,
-    metadata: { clerkUserId: userId },
+    metadata: { clerkUserId: userId, appUserId: dbUser.id },
   });
 
   return NextResponse.redirect(session.url || `${appUrl()}/pricing`);

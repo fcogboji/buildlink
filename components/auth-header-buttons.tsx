@@ -12,17 +12,17 @@ type PairVariant = "marketing" | "landing";
 const pairStyles: Record<PairVariant, { login: string; signup: string; loginLabel: string; signupLabel: string }> = {
   marketing: {
     login:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-800 sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl border border-stone-300/90 bg-white/90 px-3 text-xs font-medium text-stone-800 shadow-sm transition hover:border-stone-400 hover:bg-white sm:px-4 sm:text-sm",
     signup:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-lg bg-stone-900 px-3 text-xs font-medium text-white sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl bg-stone-900 px-3 text-xs font-medium text-white shadow-sm transition hover:bg-black sm:px-4 sm:text-sm",
     loginLabel: "Log in",
     signupLabel: "Get started",
   },
   landing: {
     login:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl border border-[#d4cdc4] px-3 text-xs font-medium text-[#1c1a18] sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl border border-[#d4cdc4] bg-white/80 px-3 text-xs font-medium text-[#1c1a18] shadow-sm transition hover:border-[#bcae9d] hover:bg-white sm:px-4 sm:text-sm",
     signup:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl bg-[#1c1a18] px-3 text-xs font-medium text-[#faf9f7] sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl bg-[#1c1a18] px-3 text-xs font-medium text-[#faf9f7] shadow-sm transition hover:bg-black sm:px-4 sm:text-sm",
     loginLabel: "Login",
     signupLabel: "Get Started",
   },
@@ -52,7 +52,7 @@ export function AuthHeaderLoginOnly() {
     <SignInButton mode="redirect" {...redirect}>
       <button
         type="button"
-        className="inline-flex min-h-11 touch-manipulation items-center rounded-lg border border-stone-300 px-3 text-xs font-medium sm:px-4 sm:text-sm"
+        className="inline-flex min-h-11 touch-manipulation items-center rounded-xl border border-stone-300/90 bg-white/90 px-3 text-xs font-medium text-stone-800 shadow-sm transition hover:border-stone-400 hover:bg-white sm:px-4 sm:text-sm"
       >
         Login
       </button>
