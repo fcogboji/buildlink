@@ -20,9 +20,9 @@ const pairStyles: Record<PairVariant, { login: string; signup: string; loginLabe
   },
   landing: {
     login:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl border border-[#d4cdc4] bg-white/80 px-3 text-xs font-medium text-[#1c1a18] shadow-sm transition hover:border-[#bcae9d] hover:bg-white sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-lg border border-white/35 bg-white/5 px-3 text-xs font-medium text-white shadow-sm transition hover:border-white/50 hover:bg-white/10 sm:px-4 sm:text-sm",
     signup:
-      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-xl bg-[#1c1a18] px-3 text-xs font-medium text-[#faf9f7] shadow-sm transition hover:bg-black sm:px-4 sm:text-sm",
+      "inline-flex min-h-11 min-w-0 touch-manipulation items-center justify-center rounded-lg bg-[#22c55e] px-3 text-xs font-semibold text-white shadow-md shadow-emerald-900/20 transition hover:bg-[#16a34a] sm:px-4 sm:text-sm",
     loginLabel: "Login",
     signupLabel: "Get Started",
   },

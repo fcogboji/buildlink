@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoWordmark } from "@/components/logo-wordmark";
 import { HeaderAuthControls } from "@/components/auth-header-buttons";
 import { MobileNav, type MobileNavLink } from "@/components/mobile-nav";
 
@@ -23,7 +24,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-stone-200/90 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
       <div className="container-app flex items-center justify-between gap-3 py-3 sm:py-4">
         <Link href="/" className="min-h-11 shrink-0 touch-manipulation text-lg font-semibold sm:text-xl">
-          Build<span className="text-amber-700">Link</span>
+          <LogoWordmark />
         </Link>
 
         <nav className="hidden flex-wrap items-center justify-center gap-4 text-sm text-stone-600 lg:flex" aria-label="App">

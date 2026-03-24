@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoWordmark } from "@/components/logo-wordmark";
 import { HeaderAuthControls } from "@/components/auth-header-buttons";
 import { MobileNav, type MobileNavLink } from "@/components/mobile-nav";
 
@@ -25,7 +26,7 @@ export function MarketingHeader() {
           href="/"
           className="min-h-11 shrink-0 touch-manipulation font-serif text-lg font-semibold tracking-tight text-stone-900 sm:text-xl"
         >
-          Build<span className="text-amber-700">Link</span>
+          <LogoWordmark />
         </Link>
 
         <nav className="hidden flex-wrap items-center justify-center gap-5 text-sm text-stone-600 md:flex lg:gap-6" aria-label="Primary">

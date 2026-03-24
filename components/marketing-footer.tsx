@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoWordmark } from "@/components/logo-wordmark";
 
 export function MarketingFooter() {
   return (
@@ -6,7 +7,7 @@ export function MarketingFooter() {
       <div className="container-app flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-serif text-xl text-stone-100">
-            Build<span className="text-amber-500">Link</span>
+            <LogoWordmark />
           </p>
           <p className="mt-2 max-w-sm text-sm text-stone-400">UK trusted workflows for homeowners and builders.</p>
         </div>
@@ -23,7 +24,9 @@ export function MarketingFooter() {
         </div>
       </div>
       <p className="container-app mt-8 border-t border-stone-800 pt-5 text-xs text-stone-500">
-        © {new Date().getFullYear()} BuildLink. All rights reserved.
+        © {new Date().getFullYear()}{" "}
+        <LogoWordmark />
+        . All rights reserved.
       </p>
     </footer>
   );

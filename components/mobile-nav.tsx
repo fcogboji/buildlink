@@ -16,9 +16,18 @@ type MobileNavProps = {
   className?: string;
   /** Screen-reader label for the menu button */
   menuLabel?: string;
+  /** `dark` = light icon on navy/hero headers */
+  variant?: "default" | "dark";
 };
 
-export function MobileNav({ links, className = "", menuLabel = "Open menu" }: MobileNavProps) {
+const menuBtnClass: Record<NonNullable<MobileNavProps["variant"]>, string> = {
+  default:
+    "touch-manipulation inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-stone-300/90 bg-white/90 text-stone-900 shadow-sm transition hover:bg-white active:bg-stone-100",
+  dark:
+    "touch-manipulation inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-white/25 bg-white/5 text-white shadow-sm transition hover:bg-white/10 active:bg-white/15",
+};
+
+export function MobileNav({ links, className = "", menuLabel = "Open menu", variant = "default" }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const { isSignedIn, isLoaded } = useAuth();
 
@@ -45,7 +54,7 @@ export function MobileNav({ links, className = "", menuLabel = "Open menu" }: Mo
     <div className={`md:hidden ${className}`}>
       <button
         type="button"
-        className="touch-manipulation inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-stone-300/90 bg-white/90 text-stone-900 shadow-sm transition hover:bg-white active:bg-stone-100"
+        className={menuBtnClass[variant]}
         aria-expanded={open}
         aria-controls="mobile-nav-panel"
         aria-label={open ? "Close menu" : menuLabel}
